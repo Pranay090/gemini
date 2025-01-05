@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Query Interface</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        #response-container {
+            margin-top: 20px;
+        }
+
+        .code-block {
+            background-color: #f4f4f4;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', Courier, monospace;
+            white-space: pre-wrap; /* Ensure long lines wrap properly */
+            word-wrap: break-word;
+        }
+
+        #loading-message {
+            font-size: 16px;
+            color: #007BFF;
+            font-weight: bold;
+        }
+
+        #waiting-message {
+            font-size: 16px;
+            color: #FF6600;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <h1>PreFS Scam</h1>
+        <textarea id="query" placeholder="Type your query here" style="width: 80%; height: 150px;"></textarea>
+        <button onclick="submitQuery()">Send</button>
+
+        <!-- Loading and Waiting Messages -->
+        <div id="loading-message" style="display: none;">Loading... Please wait.</div>
+        <div id="waiting-message" style="display: none;">Waiting for response...</div>
+
+        <!-- The response will be displayed here -->
+        <div id="response-container"></div>
+    </div>
+
+    <script>
+        async function submitQuery() {
+            const query = document.getElementById('query').value;
+            const responseContainer = document.getElementById('response-container');
+            const loadingMessage = document.getElementById('loading-message');
+            const waitingMessage = document.getElementById('waiting-message');
+
+            // Clear previous responses
+            responseContainer.innerHTML = '';
+            
+            // Show loading message before API call
+            loadingMessage.style.display = 'block';
+            waitingMessage.style.display = 'none';
+
+            try {
+                // Send query to backend API
+                const response = await fetch('/query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query: query })
+                });
+
+                const result = await response.json();
+
+                // Hide the loading message and show the waiting message
+                loadingMessage.style.display = 'none';
+                waitingMessage.style.display = 'block';
+
+                // After response is received, display the result
+                if (response.ok) {
+                    const answer = result.answer;
+
+                    // Clear waiting message
+                    waitingMessage.style.display = 'none';
+
+                    // Check if the answer contains code (look for triple backticks)
+                    if (answer.includes('```')) {
+                        const codeBlock = document.createElement('div');
+                        codeBlock.classList.add('code-block');
+                        codeBlock.textContent = answer;
+                        responseContainer.appendChild(codeBlock);
+                    } else {
+                        const answerText = document.createElement('p');
+                        answerText.textContent = answer;
+                        responseContainer.appendChild(answerText);
+                    }
+                } else {
+                    const errorText = document.createElement('p');
+                    errorText.textContent = "Error: " + result.error;
+                    responseContainer.appendChild(errorText);
+                }
+            } catch (error) {
+                // Handle any unexpected errors during the fetch
+                console.error('Error:', error);
+                loadingMessage.style.display = 'none';
+                waitingMessage.style.display = 'none';
+                const errorText = document.createElement('p');
+                errorText.textContent = "An error occurred. Please try again.";
+                responseContainer.appendChild(errorText);
+            }
+        }
+    </script>
+</body>
+</html>
